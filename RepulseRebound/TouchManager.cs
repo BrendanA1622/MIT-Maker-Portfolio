@@ -4,19 +4,20 @@ using System.Collections;
 
 public class TouchManager : MonoBehaviour
 {
+    // These variables need to be modified or tested in the inspector
     [SerializeField]
     private GameObject explosionPoint;
-/*    [SerializeField]
-    private ForcePush explosionForce;*/
-
     [SerializeField]
     private GameObject forcePrefab;
-
     [SerializeField]
     private GameObject player;
+    [SerializeField]
+    private GameObject guidePoint;
+    [SerializeField]
+    private float guideSpeed;
 
+    // These variables are only of use within this specific class and do not need to be modified beforehand
     private PlayerInput playerInput;
-
     private InputAction touchPositionAction;
     private InputAction touchPressAction;
 
@@ -24,16 +25,10 @@ public class TouchManager : MonoBehaviour
 
     private bool haveTouched;
     private bool firstTouch;
-
-    [SerializeField]
-    private GameObject guidePoint;
-
-    [SerializeField]
-    private float guideSpeed;
-
     private bool guidePointRight;
 
 
+    // Determine that the player has not yet touched the screen at the very beginning
     void Start()
     {
         guidePointRight = true;
@@ -44,6 +39,7 @@ public class TouchManager : MonoBehaviour
 
     void Update()
     {
+        // If there is at least one touch being detected we take note of that here
         if (Input.touchCount > 0)
         {
             haveTouched = true;
@@ -55,42 +51,51 @@ public class TouchManager : MonoBehaviour
             Debug.Log("IN TOUCH METHOD");
         }
 
+        // Once the player touches the screen, the green repulse ball follows their finger on the screen
         if (haveTouched)
         {
+            // Take note of the player touching the screen
             firstTouch = false;
-            Vector3 positionCam = Camera.main.ScreenToWorldPoint(currentInputTouch);
 
+            // Use a built in function to translate the coordinates of the player's touch on screen to coordinates in the game
+            Vector3 positionCam = Camera.main.ScreenToWorldPoint(currentInputTouch);
+            
+            // An explosion point is put on the repulse ball so that the falling triangle is repulsed away from it
             explosionPoint.transform.position = new Vector3(positionCam.x, positionCam.y, -1.0f);
         } else
         {
-            if (guidePointRight)
-            {
-                guidePoint.transform.Translate(Time.deltaTime * guideSpeed, 0, 0);
-            } else
-            {
-                guidePoint.transform.Translate(-Time.deltaTime * guideSpeed, 0, 0);
-            }
-
-            if (guidePoint.transform.position.x > 8)
-            {
-                guidePointRight = false;
-            }
-
-            if (guidePoint.transform.position.x < 3)
-            {
-                guidePointRight = true;
-            }
-            
+            // The hand that prompts the user to touch the screen moves back and forth
+            updateGuidePoint();
         }
-
+        // The hand that prompts the user to touch the screen goes away once they have touched the screen
         if (!firstTouch)
         {
             guidePoint.SetActive(false);
         }
     }
 
+    // Oscilates the guiding hand from left to right until the player touches the screen
+    private void updateGuidePoint()
+    {
+        if (guidePointRight)
+        {
+            guidePoint.transform.Translate(Time.deltaTime * guideSpeed, 0, 0);
+        } else {
+            guidePoint.transform.Translate(-Time.deltaTime * guideSpeed, 0, 0);
+        }
 
+        if (guidePoint.transform.position.x > 8)
+        {
+            guidePointRight = false;
+        }
+        
+        if (guidePoint.transform.position.x < 3)
+        {
+            guidePointRight = true;
+        }
+    }
 
+    // Receives the screen input information and assigns it to playerInput
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -98,22 +103,15 @@ public class TouchManager : MonoBehaviour
         touchPositionAction = playerInput.actions["ForcePosition"];
     }
 
+    // Handles input information at the start of playing
     private void OnEnable()
     {
         touchPressAction.performed += TouchPressed;
     }
 
+    // Handles input at the very end of playing
     private void OnDisable()
     {
         touchPressAction.performed -= TouchPressed;
-    }
-
-    private void TouchPressed(InputAction.CallbackContext context)
-    {
-        /*Vector3 position = Camera.main.ScreenToWorldPoint(touchPositionAction.ReadValue<Vector2>());
-        *//*        position.z = player.transform.position.z;
-                player.transform.position = position;*//*
-
-        explosionPoint.transform.position = new Vector3 (position.x, position.y, 0);*/
     }
 }
